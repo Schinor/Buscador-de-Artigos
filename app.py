@@ -39,7 +39,7 @@ def renderizar_cartao(item):
 # --- INTERFACE ---
 with st.sidebar:
     st.header("⚙️ Configurações")
-    modelo = st.selectbox("Modelo IA", ["gemini-3.0-flash", "gemini-2.5-flash", "gemini-2.0-flash"])
+    modelo = st.selectbox("Modelo IA", ["gemini-2.5-flash", "gemini-2.0-flash"])
     max_results = st.slider("Resultados por Query", 1, 5, 2)
 
 st.title("🧬 Buscador Científico Inteligente")
