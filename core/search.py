@@ -79,17 +79,31 @@ def buscar_semantic_scholar(tema: str, max_results: int = 3) -> list:
         return []
     return []
 
-def buscar_unificada(tema: str, max_por_fonte: int = 3) -> list:
+# Em core/search.py
+
+def buscar_unificada(lista_queries: list, max_por_fonte: int = 2) -> list:
     """
-    O Orquestrador: Chama todo mundo e mistura os resultados.
+    Recebe UMA LISTA de queries, executa todas e remove duplicatas.
     """
     resultados_finais = []
+    urls_vistas = set() # Conjunto para rastrear duplicatas
     
-    # 1. Busca no ArXiv (Melhor para Tech/IA/Física)
-    resultados_finais.extend(buscar_arxiv(tema, max_por_fonte))
-    
-    # 2. Busca no Semantic Scholar (Melhor para Medicina/Geral)
-    # Dica: Às vezes o S2 retorna coisas do ArXiv também, então duplicatas podem ocorrer
-    resultados_finais.extend(buscar_semantic_scholar(tema, max_por_fonte))
-    
+    print(f"🔍 Executando {len(lista_queries)} variações de busca...")
+
+    for query in lista_queries:
+        # Busca no ArXiv
+        res_arxiv = buscar_arxiv(query, max_results=max_por_fonte)
+        for art in res_arxiv:
+            if art['link'] not in urls_vistas:
+                resultados_finais.append(art)
+                urls_vistas.add(art['link'])
+        
+        # Busca no Semantic Scholar
+        res_s2 = buscar_semantic_scholar(query, max_results=max_por_fonte)
+        for art in res_s2:
+            # Verifica duplicata por Link OU Título (S2 as vezes muda o link)
+            if art['link'] not in urls_vistas:
+                resultados_finais.append(art)
+                urls_vistas.add(art['link'])
+                
     return resultados_finais

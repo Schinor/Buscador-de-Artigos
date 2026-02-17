@@ -1,6 +1,6 @@
 import streamlit as st
 from core.config import settings
-from core.ai_processor import gerar_resumo_ia
+from core.ai_processor import gerar_resumo_ia, gerar_queries_pesquisa
 from core.parser import parsear_resposta_ia
 from core.search import buscar_unificada
 
@@ -27,21 +27,33 @@ tema = st.text_input("Tema da pesquisa:", placeholder="Insira o tema aqui...")
 
 if st.button("Pesquisar"):
     if not tema:
-        st.warning("Digite um tema.")
+        st.warning("Digite um tema.", placeholder="Insira a pesquisa aqui...")
     else:
-        with st.status("Executando Agente...", expanded=True) as status:
-            st.write("📡 Conectando às bases científicas...")
+        with st.status("🤖 Agente Científico Trabalhando...", expanded=True) as status:
             
-            # Chama a nova função unificada
-            # Se o usuário pediu 5 resultados, buscamos 3 em cada fonte (total 6) para ter variedade
-            dados = buscar_unificada(tema, max_por_fonte=3)
+            # 1. GERAÇÃO DE QUERIES
+            st.write("🧠 Gerando estratégias de busca otimizadas...")
+            queries_geradas = gerar_queries_pesquisa(tema, modelo)
+            
+            # Mostra as queries geradas para o usuário (Transparência)
+            st.markdown("**Estratégias geradas:**")
+            for q in queries_geradas:
+                st.code(q, language="text")
+            
+            # 2. BUSCA MULTI-FONTE
+            st.write(f"📡 Buscando artigos nas bases (ArXiv + Semantic Scholar)...")
+            
+            # Passamos a lista de queries agora
+            dados = buscar_unificada(queries_geradas, max_por_fonte=2)
             
             if not dados:
-                status.update(label="Nenhum artigo encontrado em nenhuma base.", state="error")
+                status.update(label="Nenhum artigo encontrado.", state="error")
                 st.stop()
             
-            st.write(f"🔎 Encontrados {len(dados)} artigos brutos. Analisando...")
+            st.write(f"🔎 Encontrados {len(dados)} artigos únicos. Lendo e analisando...")
             
+            # 3. ANÁLISE FINAL
+            # Passamos o tema original para a IA focar na resposta ao usuário
             texto_ia = gerar_resumo_ia(tema, dados, modelo)
             resultados = parsear_resposta_ia(texto_ia)
             
